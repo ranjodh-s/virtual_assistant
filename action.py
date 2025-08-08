@@ -68,14 +68,23 @@ def Action(send) :
        return ans
 
     elif 'music from my laptop' in data_btn or "open song" in data_btn or "play music" in data_btn:
-        url = 'C:\d drive\music' 
-        songs = os.listdir(url)
-        os.startfile(os.path.join(url, songs[0]))
-        speak.speak("songs playing...")
-        return "songs playing..." 
+        return "Playing music from your laptop is not supported in this version."
 
     else :
         speak.speak( "i'm unable to understand,will you please elaborate more!")
 
-        return "i'm unable to understand,will you please elaborate more!"       
+        return "i'm unable to understand,will you please elaborate more!"
+
+def process_input(user_input):
+    try:
+        # Remove or replace any os.startfile or local file execution
+        # Example:
+        # if "open" in user_input:
+        #     os.startfile('somefile.txt')  # REMOVE THIS LINE
+        # Instead, return a message or handle via web
+        return f"Processed: {user_input}"
+    except AttributeError:
+        return "Sorry, I couldn't process your request due to a missing attribute."
+    except Exception as e:
+        return f"Error: {str(e)}"
 

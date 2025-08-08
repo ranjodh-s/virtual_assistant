@@ -70,18 +70,57 @@
   </form>
   </div>
 
-   
-
-    
-
-  {% if response %}
-    <h2>Response:</h2>
-    <p>{{ response }}</p>
-  {% endif %}
-  </div>
-  </div>
-
+  <h1>Virtual Assistant</h1>
+    <form id="text-form">
+        <input type="text" id="user-input" placeholder="Type your question..." required>
+        <button type="submit">Send</button>
+    </form>
+    <button id="record-btn">Record Audio</button>
+    <audio id="audio-playback" controls style="display:none;"></audio>
+    <div id="response"></div>
     <script>
+        // Text input handler
+        document.getElementById('text-form').onsubmit = async function(e) {
+            e.preventDefault();
+            const input = document.getElementById('user-input').value;
+            const res = await fetch('/process', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({input})
+            });
+            const data = await res.json();
+            document.getElementById('response').innerText = data.response || data.error;
+        };
+
+        // Audio recording and upload
+        let mediaRecorder, audioChunks = [];
+        const recordBtn = document.getElementById('record-btn');
+        const audioPlayback = document.getElementById('audio-playback');
+
+        recordBtn.onclick = async function() {
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                audioChunks = [];
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    audioPlayback.src = URL.createObjectURL(audioBlob);
+                    audioPlayback.style.display = 'block';
+                    const formData = new FormData();
+                    formData.append('audio', audioBlob, 'audio.wav');
+                    const res = await fetch('/transcribe', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    document.getElementById('response').innerText = data.transcript || data.error;
+                };
+                mediaRecorder.start();
+                recordBtn.innerText = 'Stop Recording';
+            } else {
+                mediaRecorder.stop();
+                recordBtn.innerText = 'Record Audio';
+            }
+        };
+
     function startRecordingAnimation(form) {
       const button = document.getElementById('speakButton');
       button.classList.add('recording');
